@@ -1,0 +1,76 @@
+#!/usr/bin/bash
+
+# grep -ae '{[0-9A-Z].*}' MeCabApp.sln | tr -d '{' | tr -d '\t' | sed -e 's/}.*//g' | grep -v '8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942' | uniq
+# 71C54536-1428-44EE-A64D-3609CC43F391
+# 20845EBF-8B23-4535-8350-9E3A4F7787AA
+
+VS_GUID="8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
+
+function get_guid {
+  GUID="$(curl -s "http://www.guidgen.com/" | grep value | sed -e 's/.*value="//g' | sed -e 's:" />.*::g' | tr "[:lower:]" "[:upper:]")"
+}
+
+function create_empty_sln {
+  SLN="Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+#PROJECT_HERE
+Global
+  GlobalSection(SolutionConfigurationPlatforms) = preSolution
+    Debug|x64 = Debug|x64
+    Debug|x86 = Debug|x86
+    Release|x64 = Release|x64
+    Release|x86 = Release|x86
+  EndGlobalSection
+  GlobalSection(ProjectConfigurationPlatforms) = postSolution
+    #GSECTION_HERE
+    #PSOLUTION_END
+  EndGlobalSection
+  GlobalSection(SolutionProperties) = preSolution
+    HideSolutionNode = FALSE
+  EndGlobalSection
+EndGlobal
+"
+  echo "$SLN" > "$SOLUTION.sln"
+}
+
+function add_project {
+  PROJ_NAME="$1"
+  get_guid
+  echo $GUID
+
+  PROJECT="Project("{"$VS_GUID"}") = "$PROJ_NAME", ""$PROJ_NAME"\\"$PROJ_NAME".vcxproj", "{$GUID}"\n
+EndProject"
+  sed -i -e "s/#PROJECT_HERE/$(echo $PROJECT)/" $SOLUTION.sln
+  sed -i -e '/^Global$/i #PROJECT_HERE' $SOLUTION.sln
+  add_global_section
+}
+
+function add_global_section {
+  GSECTION="
+    {$GUID}.Debug|x64.ActiveCfg = Debug|x64\n
+    {$GUID}.Debug|x64.Build.0 = Debug|x64\n
+    {$GUID}.Debug|x86.ActiveCfg = Debug|Win32\n
+    {$GUID}.Debug|x86.Build.0 = Debug|Win32\n
+    {$GUID}.Release|x64.ActiveCfg = Release|x64\n
+    {$GUID}.Release|x64.Build.0 = Release|x64\n
+    {$GUID}.Release|x86.ActiveCfg = Release|Win32\n
+    {$GUID}.Release|x86.Build.0 = Release|Win32
+"
+  sed -i -e "s/#GSECTION_HERE/$(echo $GSECTION)/" $SOLUTION.sln
+  sed -i -e '/^#PSOLUTION_END$/i #GSECTION_HERE' $SOLUTION.sln
+}
+
+# setup <solution name>
+function init {
+  SOLUTION="$1"
+  if [ ! -e "$SOLUTION.sln" ]; then
+    create_empty_sln
+  fi
+}
+
+init "tst"
+add_project "p1"
+
+
