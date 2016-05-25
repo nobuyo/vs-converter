@@ -9,7 +9,6 @@ function get_guid {
 function add_project {
   PROJ_NAME="$1"
   get_guid
-  echo $GUID
 
   PROJECT="Project("{"$VS_GUID"}") = \"$PROJ_NAME\", \"$PROJ_NAME\?$PROJ_NAME.vcxproj\", \"{$GUID}\"\n
 EndProject"
@@ -65,14 +64,14 @@ EndGlobal
 
 function create_vcxproj {
   mkdir -p "$PROJ_NAME"
-  cp etc/orig.vcxproj "$PROJ_NAME/$PROJ_NAME.vcxproj"
+  cp ../etc/orig.vcxproj "$PROJ_NAME/$PROJ_NAME.vcxproj"
   sed -i -e "s/#PROJ_NAME/$(echo $PROJ_NAME)/" $PROJ_NAME/$PROJ_NAME.vcxproj
   sed -i -e "s/#GUID/$(echo $GUID)/" $PROJ_NAME/$PROJ_NAME.vcxproj
 }
 
 function create_vcxproj_filter {
   mkdir -p "$PROJ_NAME"
-  cp etc/orig.vcxproj.filters "$PROJ_NAME/$PROJ_NAME.vcxproj.filters"
+  cp ../etc/orig.vcxproj.filters "$PROJ_NAME/$PROJ_NAME.vcxproj.filters"
   get_guid
   sed -i -e "s/#GUID1/$(echo $GUID)/" $PROJ_NAME/$PROJ_NAME.vcxproj.filters
   get_guid
@@ -81,12 +80,14 @@ function create_vcxproj_filter {
   sed -i -e "s/#GUID3/$(echo $GUID)/" $PROJ_NAME/$PROJ_NAME.vcxproj.filters
 }
 
-init_sln "tst"
-add_project "p1"
+mkdir "Mecab"
+cd Mecab
+init_sln "Mecab"
+add_project "mecabtest"
 create_vcxproj
 create_vcxproj_filter
 
-add_project "p2"
+add_project "tf"
 create_vcxproj
 create_vcxproj_filter
 
