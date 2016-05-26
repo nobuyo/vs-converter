@@ -2,6 +2,8 @@
 
 VS_GUID="8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
 
+function 
+
 function get_guid {
   GUID="$(curl -s "http://www.guidgen.com/" | grep value | sed -e 's/.*value="//g' | sed -e 's:" />.*::g' | tr "[:lower:]" "[:upper:]")"
 }
@@ -10,7 +12,7 @@ function add_project {
   PROJ_NAME="$1"
   get_guid
 
-  PROJECT="Project("{"$VS_GUID"}") = \"$PROJ_NAME\", \"$PROJ_NAME\?$PROJ_NAME.vcxproj\", \"{$GUID}\"\n
+  PROJECT="Project(\"{"$VS_GUID"}\") = \"$PROJ_NAME\", \"$PROJ_NAME\?$PROJ_NAME.vcxproj\", \"{$GUID}\"\n
 EndProject"
   sed -i -e "s/#PROJECT_HERE/$(echo $PROJECT)/" $SOLUTION.sln
   sed -i -e 's/\?/\\/' $SOLUTION.sln
@@ -20,14 +22,14 @@ EndProject"
 
 function add_global_section {
   GSECTION="
-    {$GUID}.Debug|x64.ActiveCfg = Debug|x64\n   
-    {$GUID}.Debug|x64.Build.0 = Debug|x64\n   
-    {$GUID}.Debug|x86.ActiveCfg = Debug|Win32\n   
-    {$GUID}.Debug|x86.Build.0 = Debug|Win32\n   
-    {$GUID}.Release|x64.ActiveCfg = Release|x64\n   
-    {$GUID}.Release|x64.Build.0 = Release|x64\n   
-    {$GUID}.Release|x86.ActiveCfg = Release|Win32\n   
-    {$GUID}.Release|x86.Build.0 = Release|Win32   "
+@@{$GUID}.Debug|x64.ActiveCfg = Debug|x64\n
+@@{$GUID}.Debug|x64.Build.0 = Debug|x64\n
+@@{$GUID}.Debug|x86.ActiveCfg = Debug|Win32\n
+@@{$GUID}.Debug|x86.Build.0 = Debug|Win32\n
+@@{$GUID}.Release|x64.ActiveCfg = Release|x64\n
+@@{$GUID}.Release|x64.Build.0 = Release|x64\n
+@@{$GUID}.Release|x86.ActiveCfg = Release|Win32\n
+@@{$GUID}.Release|x86.Build.0 = Release|Win32"
 
   sed -i -e "s/#GSECTION_HERE/$(echo $GSECTION)/" $SOLUTION.sln
   sed -i -e "/#PSOLUTION_END$/i #GSECTION_HERE" $SOLUTION.sln
@@ -37,29 +39,36 @@ function add_global_section {
 function init_sln {
   SOLUTION="$1"
   if [ ! -e "$SOLUTION.sln" ]; then
-    local SLN="Microsoft Visual Studio Solution File, Format Version 12.00
+    local SLN="
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 #PROJECT_HERE
 Global
-  GlobalSection(SolutionConfigurationPlatforms) = preSolution
-    Debug|x64 = Debug|x64
-    Debug|x86 = Debug|x86
-    Release|x64 = Release|x64
-    Release|x86 = Release|x86
-  EndGlobalSection
-  GlobalSection(ProjectConfigurationPlatforms) = postSolution
-    #GSECTION_HERE
-    #PSOLUTION_END
-  EndGlobalSection
-  GlobalSection(SolutionProperties) = preSolution
-    HideSolutionNode = FALSE
-  EndGlobalSection
+@GlobalSection(SolutionConfigurationPlatforms) = preSolution
+@@Debug|x64 = Debug|x64
+@@Debug|x86 = Debug|x86
+@@Release|x64 = Release|x64
+@@Release|x86 = Release|x86
+@EndGlobalSection
+@GlobalSection(ProjectConfigurationPlatforms) = postSolution
+#GSECTION_HERE
+#PSOLUTION_END
+@EndGlobalSection
+@GlobalSection(SolutionProperties) = preSolution
+@@HideSolutionNode = FALSE
+@EndGlobalSection
 EndGlobal
 "
   echo "$SLN" > "$SOLUTION.sln"
   fi
+}
+
+function clean_solution {
+  sed -i -e 's/^\s//g' "$SOLUTION.sln"
+  sed -i -e 's/@/\t/g' "$SOLUTION.sln"
+  nkf --overwrite -Lw --oc=UTF-8-BOM "$SOLUTION.sln"
 }
 
 function create_vcxproj {
@@ -90,4 +99,6 @@ create_vcxproj_filter
 add_project "tf"
 create_vcxproj
 create_vcxproj_filter
+
+clean_solution
 
