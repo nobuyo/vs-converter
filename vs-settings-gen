@@ -2,8 +2,6 @@
 
 VS_GUID="8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942"
 
-function 
-
 function get_guid {
   GUID="$(curl -s "http://www.guidgen.com/" | grep value | sed -e 's/.*value="//g' | sed -e 's:" />.*::g' | tr "[:lower:]" "[:upper:]")"
 }
